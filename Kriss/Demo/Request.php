@@ -6,7 +6,7 @@ use Kriss\Mvvm\Request\RequestInterface;
 
 class Request implements RequestInterface {
     public function getHost() {
-        return $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_NAME'];
+        return 'http'.(!empty($_SERVER['HTTPS'])?'s':'').'://'.$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_NAME'];
     }
 
     public function getMethod() {

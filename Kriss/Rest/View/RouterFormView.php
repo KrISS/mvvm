@@ -17,7 +17,7 @@ class RouterFormView implements ViewInterface {
     }
     
     public function render() {
-        $host = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_NAME'];
+        $host = 'http'.(!empty($_SERVER['HTTPS'])?'s':'').'://'.$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_NAME'];
         $result = '';
         
         $data = $this->viewModel->getFormData();

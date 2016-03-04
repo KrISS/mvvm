@@ -1,0 +1,6 @@
+#users li {repeat: data(users);}
+#users li .firstname {content: iteration(firstname);}
+#users li .lastname {content: iteration(lastname);}
+#users li .email {content: iteration(email);}
+#users li a:attr(href) {content: iteration(id), attr(href);}
+

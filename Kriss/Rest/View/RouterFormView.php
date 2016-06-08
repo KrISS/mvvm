@@ -17,7 +17,6 @@ class RouterFormView implements ViewInterface {
     }
     
     public function render() {
-        $host = 'http'.(!empty($_SERVER['HTTPS'])?'s':'').'://'.$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_NAME'];
         $result = '';
         
         $data = $this->viewModel->getFormData();
@@ -39,18 +38,18 @@ class RouterFormView implements ViewInterface {
         $url = '';
         $routerParams = $this->router->getParameters();
         if ($this->viewModel instanceOf FormListViewModelInterface) {
-            $url = $this->router->generate('autoroute_index_id', $routerParams);
+            $url = $this->router->generate('autoroute_index_id', $routerParams, true);
         } else {
-            $url = $this->router->generate('autoroute_index', $routerParams);
+            $url = $this->router->generate('autoroute_index', $routerParams, true);
         }
         if (!is_null($data)) {
             foreach($data as $slug => $object) {
                 if (!is_null($object)) {
-                    $result .= '<form action="'.$host.$url.($action !== 'POST'?'?_method='.$action:'').'" id="'.$slug.'" method="POST">';
+                    $result .= '<form action="'.$url.($action !== 'POST'?'?_method='.$action:'').'" id="'.$slug.'" method="POST">';
                     if ($action !== 'DELETE') {
                         foreach($object as $name => $value) {
                             if ($name != 'id') {
-                                $result .= '<div><label>'.$name.': <input name="'.$name.'" value="'.$value.'" /></div>';
+                                $result .= '<div><label>'.$name.': <input name="'.$name.'" value="'.$value.'" /></label></div>';
                             }
                         }
                     }
@@ -59,7 +58,7 @@ class RouterFormView implements ViewInterface {
                 }
             }
         }
-        $result .= ' <a href="'.$host.'/'.$slug.'/">index</a>';
+        $result .= ' <a href="'.$url.'">index</a>';
         
         return [[], $result];
     }

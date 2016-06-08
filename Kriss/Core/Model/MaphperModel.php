@@ -34,10 +34,10 @@ class MaphperModel implements ListModelInterface {
 
             return $result;
         } else {
-            if (isset($this->data[$criteria])) {
-                return $this->data[$criteria];
+            if (is_array($criteria)) {
+                return $this->data->filter($criteria)->limit(1)->item(0);
             } else {
-                return null;
+                return $this->data[$criteria];
             }
         }
     }

@@ -17,7 +17,6 @@ class RouterView implements ViewInterface {
     }
     
     public function render() {
-        $host = 'http'.(!empty($_SERVER['HTTPS'])?'s':'').'://'.$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_NAME'];
         $result = '';
 
         $string = [];
@@ -30,14 +29,16 @@ class RouterView implements ViewInterface {
         }
 
         $result .= join(' ', $string);
-        if ($this->viewModel instanceOf ListViewModelInterface) {
-            $result .= ' <a href="'.$host.$this->router->generate('autoroute_index', $this->router->getParameters()).'">index</a>';
-        }
-        $result .= ' <a href="'.$host.$this->router->generate('autoroute_new', $this->router->getParameters()).'">new</a>';
         $routerParams = $this->router->getParameters();
-        $result .= ' <a href="'.$host.$this->router->generate('autoroute_edit'.(isset($routerParams['id'])?'_id':''), $routerParams).'">edit</a>';
-        $result .= ' <a href="'.$host.$this->router->generate('autoroute_delete'.(isset($routerParams['id'])?'_id':''), $routerParams).'">delete</a>';
-        $result .= ' <a href="'.$host.'">home</a>';
+        $routerParamsWithoutId = $routerParams;
+        unset($routerParamsWithoutId['id']);
+        if ($this->viewModel instanceOf ListViewModelInterface) {
+            $result .= ' <a href="'.$this->router->generate('autoroute_index', $routerParamsWithoutId, true).'">index</a>';
+        }
+        $result .= ' <a href="'.$this->router->generate('autoroute_new', $routerParamsWithoutId).'">new</a>';
+        $result .= ' <a href="'.$this->router->generate('autoroute_edit'.(isset($routerParams['id'])?'_id':''), (isset($routerParams['id'])?$routerParams:$routerParamsWithoutId), true).'">edit</a>';
+        $result .= ' <a href="'.$this->router->generate('autoroute_delete'.(isset($routerParams['id'])?'_id':''), (isset($routerParams['id'])?$routerParams:$routerParamsWithoutId), true).'">delete</a>';
+        $result .= ' <a href="'.$this->router->generate('autoroute_homepage', [], true).'">home</a>';
 
         return [[], $result];
     }

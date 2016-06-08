@@ -24,7 +24,13 @@ class Request implements RequestInterface {
     }
 
     public function getUri() {
-        $uri = substr($_SERVER['REQUEST_URI'], strlen($_SERVER['SCRIPT_NAME']));
+        $uri = $_SERVER['REQUEST_URI'];
+        if (strpos($uri, $_SERVER['SCRIPT_NAME']) !== false) {
+            $uri = substr($uri, strlen($_SERVER['SCRIPT_NAME']));
+        } else {
+            $uri = substr($uri, strlen(dirname($_SERVER['SCRIPT_NAME'])));
+        }
+        
         $pos = strpos($uri, '?');
         if ($pos !== false) $uri = substr($uri, 0, $pos);
 

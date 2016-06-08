@@ -8,11 +8,8 @@ use Kriss\Core\App\App;
 
 class RestApp extends App
 {
-    protected $timeStart;
-
     public function __construct(Container $container, $autoSingleClasses = [], $autoListClasses = [])
     {
-        $this->timeStart = microtime(true);
         parent::__construct($container);
         $container->set('Kriss\\Rest\\Router\\AutoSingleRoute', [
             'constructParams' => [
@@ -36,19 +33,22 @@ class RestApp extends App
                     'index', 'GET', '/',
                     function () use ($container, $autoSingleClasses, $autoListClasses) {
                         $router = $container->get('Router');
-                        $request = $container->get('Request');
                         $body = '';
-                        foreach($autoSingleClasses as $class => $className) {
-                            $body .= '<a href="'.$request->getHost().$router->generate('autoroute_index', ['class' => $class]).'">'.$className.'</a><br>';
+                        if (is_array($autoSingleClasses)) {
+                            foreach($autoSingleClasses as $class => $className) {
+                                $body .= '<a href="'.$router->generate('autoroute_index', ['class' => $class], true).'">'.$className.'</a><br>';
+                            }
                         }
-                        foreach($autoListClasses as $class => $className) {
-                            $body .= '<a href="'.$request->getHost().$router->generate('autoroute_index', ['class' => $class]).'">'.$className.'</a><br>';
+                        if (is_array($autoListClasses)) {
+                            foreach($autoListClasses as $class => $className) {
+                                $body .= '<a href="'.$router->generate('autoroute_index', ['class' => $class], true).'">'.$className.'</a><br>';
+                            }
                         }
 
                         return new Response($body);
                     }
                 ]],
-            ]                        
+            ]
         ]);
     }
 
@@ -62,6 +62,5 @@ class RestApp extends App
         $this->container->get('Kriss\\Rest\\Router\\AutoSingleRoute');
         $this->container->get('Kriss\\Rest\\Router\\AutoListRoute');
         parent::run();
-        echo "<br>\n".'Total execution time in seconds: ' . (microtime(true) - $this->timeStart)."<br>\n";
     }
 }

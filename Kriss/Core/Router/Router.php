@@ -87,14 +87,137 @@ class Router implements RouterInterface {
         return $this->params;
     }
 
-    public function generate($name, $params = []) {
+    public function generate($name, $params = [], $absolute = false) {
         $pattern = $this->patterns[$name];
         $pattern = preg_replace('@<([^:]+)(:(.+))?>@U', '<$1>', $pattern);
 
+        $query = [];
         foreach($params as $key => $value) {
-            $pattern = str_replace('<'.$key.'>', $value, $pattern);
+            if (strpos($pattern, '<'.$key.'>') === false && !is_null($value)) {
+                $query[] = $key.'='.$value;
+            } else {
+                $pattern = str_replace('<'.$key.'>', $value, $pattern);
+            }
+        }
+
+        if (!empty($query)) {
+            $pattern .= '?'.implode($query, '&');
+        }
+
+        $baseUrl = $this->getBaseUrl();
+        $pattern = $baseUrl . $pattern;
+
+        if ($absolute) {
+            $schemeHttpHost = $this->getSchemeAndHttpHost();
+            $pattern = $schemeHttpHost . $pattern;
         }
 
         return $pattern;
+    }
+
+    private function getBaseUrl()
+    {
+        $filename = basename($_SERVER['SCRIPT_FILENAME']);
+        if (basename($_SERVER['SCRIPT_NAME']) === $filename) {
+            $baseUrl = $_SERVER['SCRIPT_NAME'];
+        } elseif (basename($_SERVER['PHP_SELF']) === $filename) {
+            $baseUrl = $_SERVER['PHP_SELF'];
+        } elseif (basename($_SERVER['ORIG_SCRIPT_NAME']) === $filename) {
+            $baseUrl = $_SERVER['ORIG_SCRIPT_NAME'];
+        } else {
+            // Backtrack up the script_filename to find the portion matching
+            // php_self
+            $path = $_SERVER['PHP_SELF'];
+            $file = $_SERVER['SCRIPT_FILENAME'];
+            $segs = explode('/', trim($file, '/'));
+            $segs = array_reverse($segs);
+            $index = 0;
+            $last = count($segs);
+            $baseUrl = '';
+            do {
+                $seg = $segs[$index];
+                $baseUrl = '/'.$seg.$baseUrl;
+                ++$index;
+            } while ($last > $index && (false !== $pos = strpos($path, $baseUrl)) && 0 != $pos);
+        }
+
+        $requestUri = $_SERVER['REQUEST_URI'];
+        $schemeAndHttpHost = $this->getSchemeAndHttpHost();
+        if (strpos($requestUri, $schemeAndHttpHost) === 0) {
+            $requestUri = substr($requestUri, strlen($schemeAndHttpHost));
+        }
+
+        if ($baseUrl && false !== $prefix = $this->getPrefix($requestUri, $baseUrl)) {
+            // full $baseUrl matches
+            return rtrim($prefix, '/');
+        }
+
+        if ($baseUrl && false !== $prefix = $this->getPrefix($requestUri, rtrim(dirname($baseUrl), '/'))) {
+            // directory portion of $baseUrl matches
+            return rtrim($prefix, '/');
+        } 
+
+        if (strlen($requestUri) >= strlen($baseUrl) && (false !== $pos = strpos($requestUri, $baseUrl)) && $pos !== 0) {
+            $baseUrl = substr($requestUri, 0, $pos + strlen($baseUrl));
+        }
+
+        return rtrim($baseUrl, '/');
+    }
+
+    protected function getBasePath()
+    {
+        $filename = basename($this->getServer('SCRIPT_FILENAME'));
+        $baseUrl = $this->getBaseUrl();
+        if (empty($baseUrl)) {
+            return '';
+        }
+
+        if (basename($baseUrl) === $filename) {
+            $basePath = dirname($baseUrl);
+        } else {
+            $basePath = $baseUrl;
+        }
+
+        return rtrim($basePath, '/');
+    }
+
+    // All private functions will be moved to a RequestContext object
+    private function getScheme()
+    {
+        return 'http'.((strtolower($this->getServer('HTTPS')) == 'on' || $this->getServer('SERVER_PORT') == '443')?'s':'');
+    }
+
+    private function getPort()
+    {
+        return $this->getServer('SERVER_PORT');
+    }
+
+    private function getHost()
+    {
+        return $this->getServer('SERVER_NAME', $this->getServer('SERVER_ADDR'));
+    }
+
+    private function getSchemeAndHttpHost()
+    {
+        $scheme = $this->getScheme();
+        $port = $this->getPort();
+        $schemeHost = $scheme.'://'.$this->getHost();
+
+        return (('http' == $scheme && $port == 80) || ('https' == $scheme && $port == 443))
+               ?$schemeHost:$schemeHost.':'.$port;
+    }
+
+    private function getPrefix($string, $prefix)
+    {
+        if (0 !== $pos = strpos($string, $prefix)) {
+            return false;
+        }
+
+        return substr($string, 0, strlen($prefix));
+    }
+
+    private function getServer($index, $default = '')
+    {
+        return isset($_SERVER[$index])?$_SERVER[$index]:$default;
     }
 }

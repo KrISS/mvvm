@@ -18,13 +18,16 @@ class AutoRoute {
         $this->container = $container;
         $this->router = $router;
         $this->classes = $classes;
-        $classes = join(array_keys($classes), '|');
-        $this->prefix = '<class'.(empty($classes)?'':':'.$classes).'>';
-        $this->addResponses();
+        if (is_array($classes)) {
+            $classes = join(array_keys($classes), '|');
+            $this->prefix = '<class'.(empty($classes)?'':':'.$classes).'>';
+            $this->addResponses();
+        }
     }
 
     public function addResponses()
     {
+        $this->addResponse($this->router, 'GET', '/', 'homepage');
         $this->addResponse($this->router, 'GET', '/'.$this->prefix.'/', 'index');
         $this->addResponse($this->router, 'GET', '/'.$this->prefix.'/new/', 'new');
         $this->addResponse($this->router, 'POST', '/'.$this->prefix.'/', 'create');

@@ -16,8 +16,9 @@ class RouterListView implements ViewInterface {
     }
     
     public function render() {
-        $host = 'http'.(!empty($_SERVER['HTTPS'])?'s':'').'://'.$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_NAME'];
         $result = '';
+        $result .= ' <a href="'.$this->router->generate('autoroute_new', $this->router->getParameters(), true).'">new</a>';
+        $result .= ' <a href="'.$this->router->generate('autoroute_homepage', [], true).'">home</a>';
 
         $string = [];
         $data = $this->viewModel->getData();
@@ -31,16 +32,16 @@ class RouterListView implements ViewInterface {
                 $result .= '<li class="'.strtolower(get_class($object)).'">'.join(' ', $string);
                 $routerParams = $this->router->getParameters();
                 $routerParams = array_merge($routerParams, ['id' => $id]);
-                $result .= ' <a href="'.$host.$this->router->generate('autoroute_index_id', $routerParams).'">show</a>';
-                $result .= ' <a href="'.$host.$this->router->generate('autoroute_edit_id', $routerParams).'">edit</a>';
-                $result .= ' <a href="'.$host.$this->router->generate('autoroute_delete_id', $routerParams).'">delete</a>';
+                $result .= ' <a href="'.$this->router->generate('autoroute_index_id', $routerParams, true).'">show</a>';
+                $result .= ' <a href="'.$this->router->generate('autoroute_edit_id', $routerParams, true).'">edit</a>';
+                $result .= ' <a href="'.$this->router->generate('autoroute_delete_id', $routerParams, true).'">delete</a>';
                 $result .= '</li>';
             }
             $result .= '</ul>';
         }
 
-        $result .= ' <a href="'.$host.$this->router->generate('autoroute_new', $this->router->getParameters()).'">new</a>';
-        $result .= ' <a href="'.$host.'">home</a>';
+        $result .= ' <a href="'.$this->router->generate('autoroute_new', $this->router->getParameters(), true).'">new</a>';
+        $result .= ' <a href="'.$this->router->generate('autoroute_homepage', [], true).'">home</a>';
 
         return [[], $result];
     }

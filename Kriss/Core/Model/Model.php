@@ -18,6 +18,7 @@ class Model implements ModelInterface {
         $this->resultClass = $resultClass;
         $this->slug = $slug;
 
+        // Get main directory
         $trace = debug_backtrace();
         $trace = $trace[count($trace) - 1];
         $trace = dirname($trace['file']) . DIRECTORY_SEPARATOR . rtrim($prefix, '/');
@@ -54,11 +55,13 @@ class Model implements ModelInterface {
         else return null;
     }
     
-    public function getResultClass() {
+    public function getResultClass()
+    {
         return $this->resultClass;
     }
     
-    public function getSlug() {
+    public function getSlug()
+    {
         return $this->slug;
     }
     

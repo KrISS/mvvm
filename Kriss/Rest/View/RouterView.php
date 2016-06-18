@@ -27,7 +27,6 @@ class RouterView implements ViewInterface {
                 $string[] = $item;
             }
         }
-
         $result .= join(' ', $string);
         $routerParams = $this->router->getParameters();
         $routerParamsWithoutId = $routerParams;

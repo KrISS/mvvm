@@ -15,6 +15,9 @@ class App implements AppInterface
         $this->container->set('Router', [
             'instanceOf' => 'Kriss\\Core\\Router\\Router',
             'shared' => true,
+            'constructParams' => [
+                ['instance' => 'Request'],
+            ]
         ]);
         $this->container->set('Request', [
             'instanceOf' => 'Kriss\\Core\\Request\\Request',

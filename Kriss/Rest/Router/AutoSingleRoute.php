@@ -4,7 +4,6 @@ namespace Kriss\Rest\Router;
 
 use \Kriss\Mvvm\Container\ContainerInterface;
 use \Kriss\Mvvm\Router\RouterInterface;
-use \Kriss\Mvvm\Model\ListModelInterface;
 
 class AutoSingleRoute extends AutoRoute {
     public function addResponses()
@@ -16,42 +15,45 @@ class AutoSingleRoute extends AutoRoute {
         $this->addResponse($this->router, 'DELETE', '/'.$this->prefix.'/', 'remove');
     }
 
-    protected function autoEdit($className)
+    protected function autoEdit($slug, $action)
     {
-        $this->autoNew($className);
-        $this->rules[$className.'\\ViewModel']['constructParams'][3] = 'PUT';
-        $this->generateFormSelectController($className);
-        $this->rules[$className.'\\Controller'] = $this->rules[$className.'\\FormSelectController'];
+        $this->autoNew($slug, $action);
+        $this->rules[$slug][$action]['view_model']['constructParams'][3] = 'PUT';
+        $this->generateFormSelectController($slug, $action);
+        $this->rules[$slug][$action]['controller'] = $this->rules[$slug][$action]['form_select_controller'];
     }
 
-    protected function autoUpdate($className) {
-        $this->autoEdit($className);
-        $this->generateValidator($className);
-        $this->rules[$className.'\\ViewModel']['constructParams'][1] = ['instance' => $className.'\\Validator'];
-        $this->generateFormController($className);
-        $this->generateListController($className, ['FormSelectController', 'FormController']);
+    protected function autoUpdate($slug, $action) {
+        $this->autoEdit($slug, $action);
+        $this->generateValidator($slug, $action);
+        $this->rules[$slug][$action]['view_model']['constructParams'][1] = ['instance' => '$'.$slug.'_'.$action.'_validator'];
+        $this->generateFormController($slug, $action);
+        $this->generateListController($slug, $action, [
+            '$'.$slug.'_'.$action.'_form_select_controller',
+            '$'.$slug.'_'.$action.'_form_controller'
+        ]);
     }
 
-    protected function autoDelete($className)
+    protected function autoDelete($slug, $action)
     {
-        $this->autoEdit($className);
-        $this->rules[$className.'\\ViewModel']['constructParams'][3] = 'DELETE';
+        $this->autoEdit($slug, $action);
+        $this->rules[$slug][$action]['view_model']['constructParams'][3] = 'DELETE';
     }
 
-    protected function autoRemove($className) {
-        $this->autoDelete($className);
-        $this->rules[$className.'\\ViewModel']['instanceOf'] = 'Kriss\\Core\\ViewModel\\DeleteFormViewModel';
-        $this->rules[$className.'\\ViewModel']['constructParams'][1] = null;
-        $this->generateFormController($className);
-        $this->generateListController($className, ['FormSelectController', 'FormController']);
+    protected function autoRemove($slug, $action) {
+        $this->autoDelete($slug, $action);
+        $this->rules[$slug][$action]['view_model']['instanceOf'] = 'Kriss\\Core\\ViewModel\\DeleteFormViewModel';
+        $this->rules[$slug][$action]['view_model']['constructParams'][1] = null;
+        $this->generateFormController($slug, $action);
+        $this->generateListController($slug, $action, ['$'.$slug.'_'.$action.'_form_select_controller', '$'.$slug.'_'.$action.'_form_controller']);
     }
 
-    private function generateFormSelectController($className)
+    private function generateFormSelectController($slug, $action)
     {
-        $this->rules[$className.'\\FormSelectController'] = [
+        $this->rules[$slug][$action]['form_select_controller'] = [
             'instanceOf' => 'Kriss\\Core\\Controller\\FormSelectController',
             'constructParams' => [
-                ['instance' => $className.'\\ViewModel'],
+                ['instance' => '$'.$slug.'_'.$action.'_view_model'],
             ]
         ];
     }

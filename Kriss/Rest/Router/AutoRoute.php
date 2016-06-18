@@ -4,7 +4,6 @@ namespace Kriss\Rest\Router;
 
 use \Kriss\Mvvm\Container\ContainerInterface;
 use \Kriss\Mvvm\Router\RouterInterface;
-use \Kriss\Mvvm\Model\ListModelInterface;
 
 class AutoRoute {
     protected $container;
@@ -19,9 +18,15 @@ class AutoRoute {
         $this->router = $router;
         $this->classes = $classes;
         if (is_array($classes)) {
-            $classes = join(array_keys($classes), '|');
-            $this->prefix = '<class'.(empty($classes)?'':':'.$classes).'>';
+            $slugs = join(array_keys($classes), '|');
+            $this->prefix = '<slug'.(empty($slugs)?'':':'.$slugs).'>';
             $this->addResponses();
+            foreach($classes as $slug => $class) {
+                if (!$this->container->has('$'.$slug.'_model')) {
+                    $this->generateModel($slug, 'default');
+                    $this->container->set('$'.$slug.'_model', $this->rules[$slug]['default']['model']);
+                }
+            }
         }
     }
 
@@ -33,31 +38,30 @@ class AutoRoute {
         $this->addResponse($this->router, 'POST', '/'.$this->prefix.'/', 'create');
     }
 
-    public function addResponse(RouterInterface $router, $method, $pattern, $name)
+    public function addResponse(RouterInterface $router, $method, $pattern, $action)
     {
         $autoroute = $this;
         $router->addResponse(
-            'autoroute_'.$name, $method, $pattern,
-            function ($class, $id = null) use ($autoroute, $name) {
-                $fun = $autoroute->getFunction($name);
-                $className = $autoroute->getClassName($class);
-                call_user_func_array(array($autoroute, 'auto'.$fun), [$className, $id]);
-                return $autoroute->getRouteResponse($name, $className);
+            'autoroute_'.$action, $method, $pattern,
+            function ($slug, $id = null) use ($autoroute, $action) {
+                $fun = $autoroute->getFunction($action);
+                call_user_func_array(array($autoroute, 'auto'.$fun), [$slug, $action, $id]);
+                return $autoroute->getRouteResponse($slug, $action);
             }
         );
     }
 
-    protected function getRouteResponse($action, $className)
+    protected function getRouteResponse($slug, $action)
     {
-        $class = $this->getClass($className);
-        $autoRoute = '$autoRoute_' . $action . '_' . $class;
+        $autoRoute = '$auto_route_' . $slug . '_' . $action;
 
-        if (!$this->container->has($className)) return false;
+        $class = $this->getClass($slug);
+        if (!$this->container->has($class)) return false;
 
         if (!$this->container->has($autoRoute)) {
-            $this->generate($action);
-            $viewName = $className . '\\View';
-            $controllerName = $className . '\\Controller';
+            $this->generate($slug, $action);
+            $viewName = '$'.$slug.'_'.$action.'_view';
+            $controllerName = '$'.$slug.'_'.$action.'_controller';
             $this->container->set($autoRoute, [
                 'instanceOf' => 'Kriss\\Core\\Response\\ViewControllerResponse',
                 'constructParams' => [
@@ -70,83 +74,80 @@ class AutoRoute {
         return $this->container->get($autoRoute);
     }
 
-    protected function autoIndex($className)
+    protected function autoIndex($slug, $action)
     {
-        $this->generateModel($className);
-        $this->generateViewModel($className);
-        $this->generateView($className);
+        $this->generateModel($slug, $action);
+        $this->generateViewModel($slug, $action);
+        $this->generateView($slug, $action);
     }
 
-    protected function autoNew($className)
+    protected function autoNew($slug, $action)
     {
-        $this->generateModel($className);
-        $this->generateFormViewModel($className, null, ['instance' => $className], 'POST');
-        $this->generateFormView($className);
+        $this->generateModel($slug, $action);
+        $this->generateFormViewModel($slug, $action, null, ['instance' => $this->getClass($slug)], 'POST');
+        $this->generateFormView($slug, $action);
     }
 
-    protected function autoCreate($className) {
-        $this->autoNew($className);
-        $this->generateValidator($className);
-        $this->rules[$className.'\\ViewModel']['constructParams'][1] = ['instance' => $className.'\\Validator'];
-        $this->generateFormController($className);
-        $this->rules[$className.'\\Controller'] = $this->rules[$className.'\\FormController'];
-        unset($this->rules[$className.'\\FormController']);
+    protected function autoCreate($slug, $action) {
+        $this->autoNew($slug, $action);
+        $this->generateValidator($slug, $action);
+        $this->rules[$slug][$action]['view_model']['constructParams'][1] = ['instance' => '$'.$slug.'_'.$action.'_validator'];
+        $this->generateFormController($slug, $action);
+        $this->rules[$slug][$action]['controller'] = $this->rules[$slug][$action]['form_controller'];
+
     }
 
-    protected function generateModel($className)
+    protected function generateModel($slug, $action)
     {
-        $class = $this->getClass($className);
-        
-        $this->rules[$className.'\\Model'] = [
+        $this->rules[$slug][$action]['model'] = [
             'instanceOf' => 'Kriss\\Core\\Model\\Model',
             'constructParams' => [
-                $class,
-                $className,
-                'data',
+                $slug,
+                $this->getClass($slug)
             ]
         ];
     }
 
-    protected function generateViewModel($className)
+    protected function generateViewModel($slug, $action)
     {
-        $this->rules[$className.'\\ViewModel'] = [
+        $this->rules[$slug][$action]['view_model'] = [
             'instanceOf' => 'Kriss\\Core\\ViewModel\\ViewModel',
             'shared' => true,
             'constructParams' => [
-                ['instance' => $className.'\\Model'],
+                ['instance' => '$'.$slug.'_'.$action.'_model'],
             ]
         ];
     }
 
-    protected function generateView($className)
+    protected function generateView($slug, $action)
     {
-        $this->rules[$className.'\\View'] = [
+        $this->rules[$slug][$action]['view'] = [
             'instanceOf' => 'Kriss\\Rest\\View\\RouterView',
             'constructParams' => [
-                ['instance' => $className.'\\ViewModel'],
+                ['instance' => '$'.$slug.'_'.$action.'_view_model'],
                 ['instance' => 'Router'],
             ]
         ];
     }
 
-    protected function generateFormController($className)
+    protected function generateFormController($slug, $action)
     {
-        $this->rules[$className.'\\FormController'] = [
+        $this->rules[$slug][$action]['form_controller'] = [
             'instanceOf' => 'Kriss\\Core\\Controller\\FormController',
             'constructParams' => [
-                ['instance' => $className.'\\ViewModel'],
-                ['instance' => 'Kriss\\Core\\Request\\Request'],
+                ['instance' => '$'.$slug.'_'.$action.'_view_model'],
+                ['instance' => 'Request'],
             ]
         ];
     }
 
-    protected function generateFormViewModel($className, $validator = null, $data = null, $method = 'POST')
+    protected function generateFormViewModel($slug, $action, $validator = null, $data = null, $method = 'POST')
     {
-        $this->rules[$className.'\\ViewModel'] = [
+        $this->rules[$slug][$action]['view_model'] = [
             'instanceOf' => 'Kriss\\Core\\ViewModel\\FormViewModel',
             'shared' => true,
             'constructParams' => [
-                ['instance' => $className.'\\Model'],
+                ['instance' => '$'.$slug.'_'.$action.'_model'],
                 $validator,
                 $data,
                 $method,
@@ -154,31 +155,31 @@ class AutoRoute {
         ];
     }
 
-    protected function generateFormView($className)
+    protected function generateFormView($slug, $action)
     {
-        $this->rules[$className.'\\View'] = [
+        $this->rules[$slug][$action]['view'] = [
             'instanceOf' => 'Kriss\\Rest\\View\\RouterFormView',
             'constructParams' => [
-                ['instance' => $className.'\\ViewModel'],
+                ['instance' => '$'.$slug.'_'.$action.'_view_model'],
                 ['instance' => 'Router'],
             ],
         ];
     }
 
-    protected function generateValidator($className)
+    protected function generateValidator($slug, $action)
     {
-        $this->rules[$className.'\\Validator'] = [
+        $this->rules[$slug][$action]['validator'] = [
             'instanceOf' => 'Kriss\\Core\\Validator\\Validator',
         ];
     }
 
-    protected function generateListController($className, $controllers = [])
+    protected function generateListController($slug, $action, $controllers = [])
     {
         $call = [];
         foreach($controllers as $controller) {
-            $call[] = ['addController', [$className.'\\'.$controller]];
+            $call[] = ['addController', [$controller]];
         }
-        $this->rules[$className.'\\Controller'] = [
+        $this->rules[$slug][$action]['controller'] = [
             'instanceOf' => 'Kriss\\Core\\Controller\\ListController',
             'constructParams' => [
                 $this->container,
@@ -187,28 +188,32 @@ class AutoRoute {
         ];
     }
 
-    protected function generate($action)
+    protected function generate($slug, $action)
     {
-        $action = $this->getFunction($action);
-        foreach($this->rules as $className => $rule) {
-            $fullClassName = explode('\\', $className);
-            array_splice($fullClassName, 1, 0, [$action]);
-            $fullClassName = implode('\\', $fullClassName);
-            if (!$this->container->has($fullClassName)) {
-                if (!$this->container->has($className)) {
-                    $this->container->set($className, $rule);
-                }
-            } else {
-                $this->container->set($className, $this->container->getRule($fullClassName));
+        foreach($this->rules[$slug][$action] as $key => $rule) {
+            $classKey = '*'.strtolower($this->getClass($slug)).'_'.$key;
+            $classActionKey = '*'.strtolower($this->getClass($slug)).'_'.$action.'_'.$key;
+            $identifierKey = '$'.$slug.'_'.$key;
+            $identifierActionKey = '$'.$slug.'_'.$action.'_'.$key;
+            
+            if ($this->container->has($classKey)) {
+                $rule = $this->mergeRule($rule, $this->container->getRule($classKey));
             }
-        }
-    }
 
-    protected function getClass($className)
-    {
-        $result = array_search($className, $this->classes);
-        if ($result !== false) return $result;
-        else return strtolower($className);
+            if ($this->container->has($classActionKey)) {
+                $rule = $this->mergeRule($rule, $this->container->getRule($classActionKey));
+            }
+
+            if ($this->container->has($identifierKey)) {
+                $rule = $this->mergeRule($rule, $this->container->getRule($identifierKey));
+            }
+
+            if ($this->container->has($identifierActionKey)) {
+                $rule = $this->container->getRule($identifierActionKey);
+            }
+
+            $this->container->set($identifierActionKey, $rule);
+        }
     }
 
     protected function getFunction($name)
@@ -222,9 +227,21 @@ class AutoRoute {
         );
     }
 
-    private function getClassName($class)
+    protected function getClass($slug)
     {
-        if (isset($this->classes[$class])) return $this->classes[$class];
-        else return ucfirst($class);
+        if (isset($this->classes[$slug])) return $this->classes[$slug];
+        else return ucfirst($slug);
+    }
+
+    protected function mergeRule($fromRule, $toRule) {
+        foreach($toRule as $key => $value) {
+            if (is_array($value) && isset($fromRule[$key])) {
+                $fromRule[$key] = $this->mergeRule($fromRule[$key], $value);
+            } else {
+                $fromRule[$key] = $value;
+            }
+        }
+
+        return $fromRule;
     }
 }

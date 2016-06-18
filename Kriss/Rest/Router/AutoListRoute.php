@@ -17,106 +17,112 @@ class AutoListRoute extends AutoRoute {
         $this->addResponse($this->router, 'DELETE', '/'.$this->prefix.'/<id:\d+>/', 'remove_id');
     }
 
-    protected function generateModel($className)
+    protected function generateModel($slug, $action)
     {
-        parent::generateModel($className);
-        $this->rules[$className.'\\Model']['instanceOf'] = 'Kriss\\Core\\Model\\ArrayModel';
+        parent::generateModel($slug, $action);
+        $this->rules[$slug][$action]['model']['instanceOf'] = 'Kriss\\Core\\Model\\ArrayModel';
     } 
 
-    protected function autoIndex($className)
+    protected function autoIndex($slug, $action)
     {
-        $this->generateModel($className);
-        $this->generateListViewModel($className);
-        $this->generateListView($className);
+        $this->generateModel($slug, $action);
+        $this->generateListViewModel($slug, $action);
+        $this->generateListView($slug, $action);
     }
 
-    protected function autoIndexId($className, $id)
+    protected function autoIndexId($slug, $action, $id)
     { 
-        $this->generateModel($className);
-        $this->generateListViewModel($className);
-        $this->generateView($className);
-        $this->generateListSelectController($className, $id);
-        $this->rules[$className.'\\Controller'] = $this->rules[$className.'\\ListSelectController'];
+        $this->generateModel($slug, $action);
+        $this->generateListViewModel($slug, $action);
+        $this->generateView($slug, $action);
+        $this->generateListSelectController($slug, $action, $id);
+        $this->rules[$slug][$action]['controller'] = $this->rules[$slug][$action]['list_select_controller'];
     }
 
-    protected function autoEditId($className, $id)
+    protected function autoEditId($slug, $action, $id)
     {
-        $this->generateModel($className);
-        $this->generateFormListViewModel($className, null, ['instance' => $className], 'PUT');
-        $this->generateFormView($className);
-        $this->generateFormListSelectController($className, $id);
-        $this->rules[$className.'\\Controller'] = $this->rules[$className.'\\FormListSelectController'];
+        $this->generateModel($slug, $action);
+        $this->generateFormListViewModel($slug, $action, null, ['instance' => $this->getClass($slug)], 'PUT');
+        $this->generateFormView($slug, $action);
+        $this->generateFormListSelectController($slug, $action, $id);
+        $this->rules[$slug][$action]['controller'] = $this->rules[$slug][$action]['form_list_select_controller'];
     }
 
-    protected function autoUpdateId($className, $id)
+    protected function autoUpdateId($slug, $action, $id)
     {
-        $this->autoEditId($className, $id);
-        $this->generateValidator($className);
-        $this->rules[$className.'\\ViewModel']['constructParams'][1] = ['instance' => $className.'\\Validator'];
-        $this->generateFormController($className);
-        $this->generateListController($className, ['FormListSelectController', 'FormController']);
+        $this->autoEditId($slug, $action, $id);
+        $this->generateValidator($slug, $action);
+        $this->rules[$slug][$action]['view_model']['constructParams'][1] = ['instance' => '$'.$slug.'_'.$action.'_validator'];
+        $this->generateFormController($slug, $action);
+        $this->generateListController($slug, $action, [
+            '$'.$slug.'_'.$action.'_form_list_select_controller',
+            '$'.$slug.'_'.$action.'_form_controller'
+        ]);
     }
 
-    protected function autoDeleteId($className, $id)
+    protected function autoDeleteId($slug, $action, $id)
     {
-        $this->autoEditId($className, $id);
-        $this->rules[$className.'\\ViewModel']['constructParams'][3] = 'DELETE';
+        $this->autoEditId($slug, $action, $id);
+        $this->rules[$slug][$action]['view_model']['constructParams'][3] = 'DELETE';
     }
     
-    protected function autoRemoveId($className, $id)
+    protected function autoRemoveId($slug, $action, $id)
     {
-        $this->autoDeleteId($className, $id);
-        $this->rules[$className.'\\ViewModel']['instanceOf'] = 'Kriss\\Core\\ViewModel\\DeleteFormListViewModel';
-        $this->rules[$className.'\\ViewModel']['constructParams'][1] = null;
-        $this->generateFormController($className);
-        $this->generateListController($className, ['FormListSelectController', 'FormController']);
+        $this->autoDeleteId($slug, $action, $id);
+        $this->rules[$slug][$action]['view_model']['instanceOf'] = 'Kriss\\Core\\ViewModel\\DeleteFormListViewModel';
+        $this->rules[$slug][$action]['view_model']['constructParams'][1] = null;
+        $this->generateFormController($slug, $action);
+        $this->generateListController($slug, $action, [
+            '$'.$slug.'_'.$action.'_form_list_select_controller',
+            '$'.$slug.'_'.$action.'_form_controller'
+        ]);
     }
 
-    private function generateFormListSelectController($className, $id)
+    private function generateFormListSelectController($slug, $action, $id)
     {
-        $this->rules[$className.'\\FormListSelectController'] = [
+        $this->rules[$slug][$action]['form_list_select_controller'] = [
             'instanceOf' => 'Kriss\\Core\\Controller\\FormListSelectController',
             'constructParams' => [
-                ['instance' => $className.'\\ViewModel'],
+                ['instance' => '$'.$slug.'_'.$action.'_view_model'],
                 $id,
             ]
         ];
     }
 
-    private function generateFormListViewModel($className, $validator = null, $data = null, $method = 'POST')
+    private function generateFormListViewModel($slug, $action, $validator = null, $data = null, $method = 'POST')
     {
-        $this->generateFormViewModel($className, $validator, $data, $method);
-        $this->rules[$className.'\\ViewModel']['instanceOf'] = 'Kriss\\Core\\ViewModel\\FormListViewModel';
+        $this->generateFormViewModel($slug, $action, $validator, $data, $method);
+        $this->rules[$slug][$action]['view_model']['instanceOf'] = 'Kriss\\Core\\ViewModel\\FormListViewModel';
     }
 
-    private function generateListSelectController($className, $id)
+    private function generateListSelectController($slug, $action, $id)
     {
-        $this->rules[$className.'\\ListSelectController'] = [
+        $this->rules[$slug][$action]['list_select_controller'] = [
             'instanceOf' => 'Kriss\\Core\\Controller\\ListSelectController',
             'constructParams' => [
-                ['instance' => $className.'\\ViewModel'],
+                ['instance' => '$'.$slug.'_'.$action.'_view_model'],
                 $id,
             ]
         ];
     }
     
-    private function generateListViewModel($className)
+    private function generateListViewModel($slug, $action)
     {
-        $this->rules[$className.'\\ViewModel'] = [
+        $this->rules[$slug][$action]['view_model'] = [
             'instanceOf' => 'Kriss\\Core\\ViewModel\\ListViewModel',
             'shared' => true,
             'constructParams' => [
-                ['instance' => $className.'\\Model'],
+                ['instance' => '$'.$slug.'_'.$action.'_model'],
             ]
         ];
     }
 
-    private function generateListView($className)
+    private function generateListView($slug, $action)
     {
-        $this->rules[$className.'\\View'] = [
+        $this->rules[$slug][$action]['view'] = [
             'instanceOf' => 'Kriss\\Rest\\View\\RouterListView',
             'constructParams' => [
-                ['instance' => $className.'\\ViewModel'],
+                ['instance' => '$'.$slug.'_'.$action.'_view_model'],
                 ['instance' => 'Router'],
             ]
         ];

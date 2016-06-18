@@ -8,4 +8,6 @@ interface RequestInterface {
     public function getRequest();
     public function getQuery();
     public function getUri();
+    public function getBaseUrl();
+    public function getSchemeAndHttpHost();
 }

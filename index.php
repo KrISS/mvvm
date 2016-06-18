@@ -16,15 +16,27 @@ class User {
     public $firstname = 'default_firstname';
     public $lastname = 'default_lastname';
     public $email = 'default@email.net';
+    public $username = 'username';
+
+    public function getUsername()
+    {
+        return $this->username;
+    }
+
+    public function getPassword()
+    {
+        return sha1('usernametoto');
+    }
 }
 
 $container = new DiceContainer(new Dice\Dice);
 
 $app = new RestApp(
     $container
-    , ['config' => 'Config']
+    , ['config' => 'Config', 'admin' => 'User']
     , ['configs' => 'Config', 'users' => 'User']
 );
+
 
 $container->set('PDO', [
     'constructParams' => ['sqlite:data/data.db'],
@@ -51,7 +63,7 @@ $container->set('User\\Maphper', [
     ]
 ]);
 
-$container->set('User\\Model', [
+$container->set('$users_model', [
     'instanceOf' => 'Kriss\\Core\\Model\\MaphperModel',
     'constructParams' => [
         'users',
@@ -60,7 +72,7 @@ $container->set('User\\Model', [
     ]
 ]);
 
-$container->set('User\\Validator', [
+$container->set('*user_validator', [
     'instanceOf' => 'Kriss\\Core\\Validator\\HybridLogicValidator',
     'call' => [
         ['setConstraints', [[
@@ -69,7 +81,7 @@ $container->set('User\\Validator', [
     ],
 ]);
 
-$container->set('Config\\Update\\Validator', [
+$container->set('$config_update_validator', [
     'instanceOf' => 'Kriss\\Core\\Validator\\Validator',
     'call' => [
         ['setConstraints', [[
@@ -78,21 +90,14 @@ $container->set('Config\\Update\\Validator', [
     ],
 ]);
 
-$container->set('Config\\Create\\ViewModel', [
+$container->set('*config_create_view_model', [
     'instanceOf' => 'Kriss\\Core\\ViewModel\\RedirectFormViewModel',
-    'shared' => true,
-    'constructParams' => [
-        ['instance' => 'Config\\Model'],
-        ['instance' => 'Config\\Validator'],
-        ['instance' => 'Config'],
-        'PUT',
-    ]
 ]);
 
-$container->set('Config\\IndexId\\View', [
+$container->set('$configs_index_id_view', [
     'instanceOf' => 'Kriss\\Core\\View\\JsonView',
     'constructParams' => [
-        ['instance' => 'Config\\ViewModel'],
+        ['instance' => '$configs_index_id_view_model'],
     ]
 ]);
 
@@ -103,11 +108,11 @@ $container->set('Transphporm\\Builder', [
     ]    
 ]);
 
-$container->set('User\\Index\\View', [
+$container->set('$users_index_view', [
     'instanceOf' => 'Kriss\\Rest\\View\\TransphpormView',
     'constructParams' => [
-        ['instance' => 'User\\ViewModel'],
-        ['instance' => 'Transphporm\\Builder'],
+        ['instance' => '$users_index_view_model'],
+        ['instance' => 'Transphporm\\Builder']
     ]
 ]);
 
@@ -126,10 +131,13 @@ $router->addResponse('index_hello', 'GET', '/hello/<!name>', function ($name = "
     return new Response('Hello '.$name);
 });
 
+$router->addResponse('index_hello_tutu', 'GET', '/hi/<name:\d>', function ($name = "world") {
+    return new Response('Hello '.$name);
+});
 $router->addResponse('index_test', 'GET', '/test', new Response('Hello Test'));
 
 $router->addResponse('index_test_route', 'GET', '/test_route', function () use ($router) {
-        return new Response($router->generate('autoroute_edit_id', ['class' => 'users', 'id' => 1]));
+        return new Response($router->generate('autoroute_edit_id', ['slug' => 'users', 'id' => 1]));
 });
 
 $app->run();

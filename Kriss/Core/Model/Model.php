@@ -14,7 +14,7 @@ class Model implements ModelInterface {
     
     protected $data = null;
 
-    public function __construct($slug = "data", $resultClass = null, $prefix = '') {
+    public function __construct($slug = "data", $resultClass = null, $prefix = 'data') {
         $this->resultClass = $resultClass;
         $this->slug = $slug;
 

@@ -35,13 +35,13 @@ class RestApp extends App
                         $router = $container->get('Router');
                         $body = '';
                         if (is_array($autoSingleClasses)) {
-                            foreach($autoSingleClasses as $class => $className) {
-                                $body .= '<a href="'.$router->generate('autoroute_index', ['class' => $class], true).'">'.$className.'</a><br>';
+                            foreach($autoSingleClasses as $slug => $class) {
+                                $body .= '<a href="'.$router->generate('autoroute_index', ['slug' => $slug], true).'">'.$class.' ('.$slug.')</a><br>';
                             }
                         }
                         if (is_array($autoListClasses)) {
-                            foreach($autoListClasses as $class => $className) {
-                                $body .= '<a href="'.$router->generate('autoroute_index', ['class' => $class], true).'">'.$className.'</a><br>';
+                            foreach($autoListClasses as $slug => $class) {
+                                $body .= '<a href="'.$router->generate('autoroute_index', ['slug' => $slug], true).'">'.$class.' ('.$slug.')</a><br>';
                             }
                         }
 
@@ -61,6 +61,7 @@ class RestApp extends App
     {
         $this->container->get('Kriss\\Rest\\Router\\AutoSingleRoute');
         $this->container->get('Kriss\\Rest\\Router\\AutoListRoute');
+
         parent::run();
     }
 }

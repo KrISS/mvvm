@@ -19,6 +19,6 @@ class Dispatcher implements DispatcherInterface
 
     public function dispatch()
     {
-        return $this->router->getResponse($this->request->getMethod(), $this->request->getUri());
+        return $this->router->getResponse($this->request->getMethod(), $this->request->getPathInfo());
     }
 }

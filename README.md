@@ -8,12 +8,12 @@ Presentation
 ------------
 The goal is to build a really flexible MVVM framework that let you
 build very rapidly a skeleton for apps. Look at the mini.php file and
-you will see how it's easy to have a very simple rest app for Test
+you will see how it's easy to have a very simple CRUD app for Test
 class.
 
 To illustrate the flexibility, KrISS MVVM already works with different projects :
 * [Dice](https://github.com/level-2/dice) for the container
-* [Transphporm](https://github.com/level-2/maphper) for the template (temporarly removed)
+* [Transphporm](https://github.com/level-2/maphper) for the template (temporary removed)
 * [Maphper](https://github.com/level-2/maphper) for the model
 * [HybridLogicValidation](https://github.com/Dachande663/PHP-Validation) for the validation
 

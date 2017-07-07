@@ -3,56 +3,53 @@
 namespace Kriss\Core\ViewModel;
 
 use Kriss\Mvvm\ViewModel\FormViewModelInterface;
-use Kriss\Mvvm\Model\ModelInterface as Model;
-use Kriss\Mvvm\Validator\ValidatorInterface as Validator;
 
-class FormViewModel extends ViewModel implements FormViewModelInterface {
+use Kriss\Mvvm\Form\FormInterface;
+use Kriss\Mvvm\Model\ModelInterface;
+use Kriss\Mvvm\Validator\ValidatorInterface;
+
+class FormViewModel implements FormViewModelInterface {
+    use ViewModelTrait;
+    
     protected $validator;
-    protected $action;
-    protected $formData;
+    protected $form;
+    private $errors = [];
 
-    public function __construct(Model $model, Validator $validator = null, $data = null, $action = 'POST') {
-        parent::__construct($model);
-        $this->formData = $data;
-        $this->action = $action;
+    public function __construct(ModelInterface $model, FormInterface $form, ValidatorInterface $validator = null) {
+        $this->model = $model;
+        $this->form = $form;
         $this->validator = $validator;
-	}
+    }
+    
+    public function getData() {return ['slug' => $this->model->getSlug(), 'form' => $this->form->getForm()];}
+    
+    public function setCriteria($criteria) {
+        $this->criteria = $criteria;
+        $data = $this->model->findBy($this->criteria, $this->limit, $this->offset, $this->orderBy);
+        if (count($data) === 1) $data = reset($data);
+        $this->form->setData($data);
+    }
 
-    public function setFormData($data) {
-        if (!is_null($data)) {
-            foreach ($data as $key => $value) {
-                $this->formData->$key = $value;
-            }
+    public function getErrors() {return $this->errors;}
+
+    private function dataErrors($data) {
+        if (!is_null($this->validator)) $this->validator->isValid($data);
+        return is_null($this->validator)?[]:$this->validator->getErrors();
+    }
+
+    public function isValid($data) {
+        if (array_key_exists('_', $data)) $data = $data['_'];
+        if (empty(array_filter(array_keys($data), 'is_int'))) {
+            $this->errors = $this->dataErrors($data);
         } else {
-            $this->formData = null;
+            $errors = [];
+            foreach($data as $key => $item) {
+                $errors = $this->dataErrors($item);
+                if (!empty($errors)) $this->errors[$key] = $errors;
+            }
         }
 
-        return $this->formData;
-    }
-
-    public function getFormData() {
-        return [$this->model->getSlug() => $this->formData];
-    }
-
-    public function getErrors() {
-        return !is_null($this->validator)?$this->validator->getErrors():[];
-    }
-
-    public function getAction() {
-        return $this->action;
-    }
-
-    public function isValid($data) {        
-        return !is_null($this->validator)?$this->validator->isValid($data):true;
-    }
-
-    public function failure($data) {
-
-    }
-
-    public function success($data) { 
-        $this->model->persist($data);
-        $this->model->flush();
+        return empty($this->errors);
     }
 }
 

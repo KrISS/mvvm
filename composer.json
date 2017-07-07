@@ -1,8 +1,12 @@
 {
     "require": {
+    },
+    "require-dev": {
         "hybridlogic/validation": "@dev",
         "level-2/dice": "@dev",
         "level-2/maphper": "@dev",
-        "level-2/transphporm": "@dev"
+        "level-2/transphporm": "@dev",
+        "maximebf/debugbar": ">=1.0.0",
+        "phpunit/php-code-coverage": "^5.2"
     }
 }

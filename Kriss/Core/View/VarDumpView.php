@@ -2,7 +2,11 @@
 
 namespace Kriss\Core\View;
 
-class VarDumpView extends View {
+use Kriss\Mvvm\View\ViewInterface;
+
+class VarDumpView implements ViewInterface {
+    use ViewTrait;
+    
     public function render() {
         ob_start();
         var_dump($this->viewModel->getData());

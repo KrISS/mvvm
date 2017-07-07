@@ -1,5 +1,5 @@
 .htaccess
-tests/html
+test/html
 data
 vendor
 composer.lock

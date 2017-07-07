@@ -4,21 +4,27 @@ namespace Kriss\Demo;
 
 use Kriss\Mvvm\Controller\ControllerInterface;
 
-class Controller implements ControllerInterface {
-    protected $viewModel;
-    protected $request;
+use Kriss\Mvvm\FormAction\FormActionInterface;
+use Kriss\Mvvm\ViewModel\FormViewModelInterface;
+use Kriss\Mvvm\Request\RequestInterface;
 
-    public function __construct(ViewModel $viewModel, Request $request) {
-	$this->viewModel = $viewModel;
+class Controller implements ControllerInterface {
+    private $viewModel;
+    private $request;
+    private $formAction;
+
+    public function __construct(FormViewModelInterface $viewModel, RequestInterface $request, FormActionInterface $formAction) {
+        $this->viewModel = $viewModel;
         $this->request = $request;
+        $this->formAction = $formAction;
     }
 
     public function action() {
-        $data = $this->viewModel->setFormData($this->request->getQuery());
+        $data = $this->request->getQuery();
         if ($this->viewModel->isValid($data)) {
-            $this->viewModel->success($data);
+            $this->formAction->success($data);
         } else {
-            $this->viewModel->failure($data);
+            $this->formAction->failure($data);
         }
     }
 }

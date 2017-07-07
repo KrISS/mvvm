@@ -1,7 +1,24 @@
-<phpunit bootstrap="tests/bootstrap.php">
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- see http://www.phpunit.de/wiki/Documentation -->
+<phpunit bootstrap="test/bootstrap.php" stderr="true" processIsolation="true">
   <testsuites>
-    <testsuite name="tests">
-      <directory>tests</directory>
+    <testsuite name="unit">
+      <directory>test</directory>
     </testsuite>
   </testsuites>
+
+  <filter>
+    <whitelist processUncoveredFilesFromWhitelist="true">
+      <directory suffix=".php">Kriss</directory>
+      <directory suffix=".php">plugins</directory>
+      <exclude>
+	<directory suffix=".php"></directory>
+	<file></file>
+      </exclude>
+    </whitelist>
+  </filter>
+
+  <logging>
+    <log type="coverage-html" target="test/html"/>
+  </logging>
 </phpunit>

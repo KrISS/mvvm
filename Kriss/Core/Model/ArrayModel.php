@@ -2,49 +2,53 @@
 
 namespace Kriss\Core\Model;
 
-use Kriss\Mvvm\Model\ListModelInterface;
+use Kriss\Mvvm\Model\ModelInterface;
 
-class ArrayModel extends Model implements ListModelInterface {
+class ArrayModel implements ModelInterface {
+    use ArrayModelTrait;
+    
+    const PHPPREFIX = '<'.'?php /* ';
+    const PHPSUFFIX = ' */ ?'.'>';
+      
+    protected $resultClass;
+    protected $slug;
+    protected $file;
     protected $data = [];
 
-    public function findOneBy($criteria = null)
-    {
-        if (is_null($criteria)) return null;
+    public function __construct($slug = "data", $resultClass = null, $prefix = 'data') {
+        $this->resultClass = $resultClass;
+        $this->slug = $slug;
 
-        if (isset($this->data[$criteria])) {
-            return $this->data[$criteria];
-        } else {
-            return null;
+        $this->file = getcwd()
+                    . DIRECTORY_SEPARATOR . trim($prefix, DIRECTORY_SEPARATOR)
+                    . DIRECTORY_SEPARATOR . $slug . '.php';
+        if (file_exists($this->file)) {
+            $this->data = unserialize(
+                gzinflate(
+                    base64_decode(
+                        substr(
+                            file_get_contents($this->file),
+                            strlen(self::PHPPREFIX),
+                            -strlen(self::PHPSUFFIX)
+                        )
+                    )
+                )
+            );
         }
     }
-
-    public function findBy($criteria = null, $orderBy = null, $limit = null, $offset = null)
-    {
-        if (is_null($criteria)) return $this->data;
-
-        if (isset($this->data[$criteria])) {
-            return [$this->data[$criteria]];
-        } else {
-            return [];
-        }
-    }
-
-    public function persist($data) {
-        $index = array_search($data, $this->data, true);
-        if ($index !== false) {
-            $this->data[$index] = $data;
-        } else {
-            if (empty($this->data)) { $this->data[1] = $data; }
-            else { $this->data[] = $data; }
-            $index = array_search($data, $this->data, true);
-            $data->id = $index;
-        }
-    }
-
-    public function remove($data) {
-        $index = array_search($data, $this->data);
-        if ($index !== false) {
-            unset($this->data[$index]);
+    
+    public function flush() {
+        if (!empty($this->data)) {
+            if (!file_exists($this->file)) $this->createDir();
+            file_put_contents(
+                $this->file,
+                self::PHPPREFIX
+                . base64_encode(gzdeflate(serialize($this->data)))
+                . self::PHPSUFFIX,
+                LOCK_EX
+            );
+        } else if (file_exists($this->file)) {
+            unlink($this->file);
         }
     }
 }

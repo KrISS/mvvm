@@ -1,4 +1,0 @@
-#name input[name="name"]:attr(value) {content: data(data.users.name]);}
-#type input[name="type"]:attr(value) {content: data(data.users.type]);}
-#slug input[name="slug"]:attr(value) {content: data(data.users.slug]);}
-#errors li {repeat: data(errors); content: iteration();}

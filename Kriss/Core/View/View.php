@@ -2,30 +2,27 @@
 
 namespace Kriss\Core\View;
 
-use Kriss\Mvvm\View\ViewInterface as ViewInterface;
-use Kriss\Mvvm\ViewModel\ViewModelInterface as ViewModel;
+use Kriss\Mvvm\View\ViewInterface;
 
 class View implements ViewInterface {
-    protected $viewModel;
+    use ViewTrait;
+
+    private function classToAttr($class) {return strtolower($class);}
     
-    public function __construct(ViewModel $viewModel) {
-        $this->viewModel = $viewModel;
-    }
-    
-    public function render() {
-        $result = '';
-        $string = [];
-        foreach(reset($this->viewModel->getData()) as $item) {
+    private function stringify($data, $first = false) {
+        $string = ['<ul>'];
+        foreach($data as $key => $item) {
+            $attr = is_object($item)?$this->classToAttr(get_class($item)):(!is_numeric($key)?$key:'');
+            $attr = empty($attr)?'':($first?' id="'.$attr.'"':' class="'.$attr.'"');
             if (is_object($item) || is_array($item)) {
-                foreach($item as $subItem) {
-                    $string[] = $subItem;
-                }
+                $string[] = '<li'.$attr.'>'.$key.': '.$this->stringify($item).'</li>';
             } else {
-                $string[] = $item;
+                $string[] = '<li'.$attr.'>'.$key.': '.$item.'</li>';
             }
         }
-        $result .= join(' ', $string);
-
-        return [[], $result];
+        $string[] = '</ul>';
+        return join('', $string);
     }
+    
+    public function render() {return [[], $this->stringify($this->viewModel->getData(), true)];}
 }

@@ -5,8 +5,10 @@ namespace Kriss\Core\Response;
 use Kriss\Mvvm\Response\ResponseInterface;
 
 class Response implements ResponseInterface {
-    protected $headers;
-    protected $body;
+    use ResponseTrait;
+    
+    protected $body = '';
+    protected $headers = [];
     
     public function __construct($body = '', $headers = [])
     {
@@ -14,10 +16,5 @@ class Response implements ResponseInterface {
         $this->headers = $headers;
     }
 
-    public function send() {
-        foreach ($this->headers as $header) {
-            header($header[0] . ': ' . $header[1]);
-        }
-        echo $this->body;
-    }
+    public function send() {$this->sendHeadersBody($this->headers, $this->body);}
 }

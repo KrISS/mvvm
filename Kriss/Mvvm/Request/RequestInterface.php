@@ -3,11 +3,13 @@
 namespace Kriss\Mvvm\Request;
 
 interface RequestInterface {
+    public function getBaseUrl();
     public function getHost();
     public function getMethod();
-    public function getRequest();
-    public function getQuery();
-    public function getUri();
-    public function getBaseUrl();
+    public function getPathInfo();
+    public function getQuery($query = null, $default = null);
+    public function getRequest($request = null, $default = null);
     public function getSchemeAndHttpHost();
+    public function getServer($server = null, $default = null);
+    public function getUri();
 }

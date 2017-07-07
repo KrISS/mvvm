@@ -8,6 +8,8 @@ use Kriss\Mvvm\View\ViewInterface;
 use Kriss\Mvvm\Controller\ControllerInterface;
 
 class ViewControllerResponse implements ResponseInterface {
+    use ResponseTrait;
+    
     private $view;
     private $controller;
 
@@ -22,9 +24,6 @@ class ViewControllerResponse implements ResponseInterface {
         }
 
         list($headers, $body) = $this->view->render();
-        foreach ($headers as $header) {
-            header($header);
-        }
-        echo $body;
+        $this->sendHeadersBody($headers, $body);
     }
 }

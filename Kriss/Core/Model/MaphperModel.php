@@ -2,18 +2,18 @@
 
 namespace Kriss\Core\Model;
 
-use Kriss\Mvvm\Model\ListModelInterface;
+use Kriss\Mvvm\Model\ModelInterface;
 
-class MaphperModel implements ListModelInterface {
+class MaphperModel implements ModelInterface {
     protected $resultClass;
     protected $slug;
 
-    protected $toPersist = [];
-    protected $toRemove = [];
-
-    public function __construct($slug = "data", $resultClass = null, \Maphper\Maphper $maphper) { 
+    public function __construct(\Maphper\Maphper $maphper, $slug = "data", $resultClass = null) {
         $this->resultClass = $resultClass;
         $this->slug = $slug;
+        if (!is_null($resultClass)) {
+            $maphper = $maphper->resultClass($resultClass);
+        }
         $this->data = $maphper;
     }
 
@@ -22,61 +22,56 @@ class MaphperModel implements ListModelInterface {
     }
 
     public function getData() {
-        return $this->data;
+        $result = [];
+        foreach($this->data as $data) {
+            $result[] = $data;
+        }
+        return $result;
     }
 
-    public function findOneBy($criteria = null) {
-        if (is_null($criteria)) {
-            $result = [];
-            foreach($this->data as $data) {
-                $result[] = $data;
-            }
+    public function findOneBy($criteria = []) {
+        $result = $this->findBy($criteria);
+        if (count($result) === 1) {
+            return reset($result);
+        }
 
-            return $result;
-        } else {
-            if (is_array($criteria)) {
-                return $this->data->filter($criteria)->limit(1)->item(0);
+        return null;
+    }
+
+    public function count($criteria = []) {return count($this->data->filter($criteria));}
+
+    public function findBy($criteria = [], $limit = null, $offset = null, $orderBy = null) {
+        $result = [];
+        if (!is_array($criteria)) {
+            $fakeData = new $this->resultClass;
+            $search = $criteria;
+            $criteria = [\Maphper\Maphper::FIND_OR => []];
+            foreach(array_keys((array)$fakeData) as $key) {
+                $criteria[\Maphper\Maphper::FIND_OR][] = [$key => $search];
+            }
+        }
+        foreach($this->data->filter($criteria)->sort($orderBy)->offset($offset)->limit($limit) as $data) { $result[$data->id] = $data; }
+
+        return $result;
+    }
+
+    public function remove($data = null) {
+        if (count($this->data) > 0) {
+            if (is_null($data)) {
+                $this->data->delete();
             } else {
-                return $this->data[$criteria];
+                unset($this->data[$data->id]);
             }
         }
-    }
-
-    public function findBy($criteria = null, $orderBy = null, $limit = null, $offset = null)
-    {
-        if (is_null($criteria)) {
-            $result = [];
-            foreach($this->data as $data) { $result[$data->id] = $data; }
-            return $result;
-        }
-
-        if (isset($this->data[$criteria])) {
-            return [$this->data[$criteria]];
-        } else {
-            return [];
-        }
-    }
-
-    public function remove($data) {
-        $this->toRemove[] = $data;
     }
 
     public function persist($data) {
-        $this->toPersist[] = $data;
-    }
-
-    public function getSlug() {
-        return $this->slug;
-    }
-
-    public function flush() {
-        foreach($this->toPersist as $data) {
+        if (is_null($this->resultClass) || $data instanceOf $this->resultClass) {
             $this->data[] = $data;
         }
-        $this->toPersist = [];
-        foreach($this->toRemove as $data) {
-            unset($this->data[$data->id]);
-        }
-        $this->toRemove = [];
     }
+
+    public function getSlug() {return $this->slug;}
+
+    public function flush() {}
 }

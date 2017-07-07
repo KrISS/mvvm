@@ -11,28 +11,21 @@ class ViewModel implements ViewModelInterface {
     public function __construct(Model $model, Validator $validator) {
         $this->model = $model;
         $this->validator = $validator;
-	$this->data = null;
+        $this->data = null;
     }
 
-    public function setId($id) {}
-
-    public function setFormData($data) { $this->data = $data; return $data; }
-
-    public function getFormData() { return $this->data; }
+    public function setCriteria($criteria) {}
+    public function setOrderBy($orderBy) {}
+    public function setOffset($offset) {}
+    public function setLimit($limit) {}
 
     public function getData() {
-        return [$this->model->getSlug() => $this->model->getData()];
+        return [$this->model->getSlug() => $this->model->getData(), 'method' => 'GET'];
     }
-
-    public function getAction() { return 'GET'; }
 
     public function getErrors() { return $this->validator->getErrors(); }
 
     public function isValid($data) {        
         return $this->validator->isValid($data);
     }
-
-    public function failure($data) { $this->model->remove(null); }
-
-    public function success($data) { $this->model->persist($data['hello']); }
 }

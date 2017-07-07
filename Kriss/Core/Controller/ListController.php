@@ -4,25 +4,22 @@ namespace Kriss\Core\Controller;
 
 use Kriss\Mvvm\Controller\ControllerInterface;
 
-use Kriss\Mvvm\ViewModel\FormViewModelInterface as ViewModel;
-use Kriss\Mvvm\Container\ContainerInterface as Container;
+use Kriss\Mvvm\ViewModel\ViewModelInterface;
+use Kriss\Mvvm\Request\RequestInterface;
+use Kriss\Mvvm\Router\RouterInterface;
 
 class ListController implements ControllerInterface {
-    protected $container;
-    protected $controllers = [];
+    use ListControllerTrait;
     
-    public function __construct(Container $container)
-    {
-        $this->container = $container;
+    protected $viewModel;
+    protected $request;
+    protected $router;
+    
+    public function __construct(ViewModelInterface $viewModel, RequestInterface $request, RouterInterface $router) {
+        $this->viewModel = $viewModel;
+        $this->request = $request;
+        $this->router = $router;
     }
     
-    public function addController($rule) {
-        $this->controllers[] = $this->container->get($rule);
-    }
-    
-    public function action() {
-        foreach($this->controllers as $controller) {
-            $controller->action();
-        }
-    }
+    public function action() {$this->listAction();}
 }

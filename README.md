@@ -13,9 +13,9 @@ class.
 
 To illustrate the flexibility, KrISS MVVM already works with different projects :
 * [Dice](https://github.com/level-2/dice) for the container
-* [Transphporm](https://github.com/level-2/maphper) for the template
+* [Transphporm](https://github.com/level-2/maphper) for the template (temporarly removed)
 * [Maphper](https://github.com/level-2/maphper) for the model
-* [Validation]() for the validation
+* [HybridLogicValidation](https://github.com/Dachande663/PHP-Validation) for the validation
 
 Installation
 ------------
@@ -27,15 +27,10 @@ you can go to your mvvm directory with a browser and the demo should work.
 
 http://localhost/mvvm/demo.php
 
-```bash
-cd mvvm
-composer update #if composer is globally installed
-mkdir data
-chmod 777 data #well, that's just for a try
-```
-you can now view a real example
-
-http://localhost/mvvm/index.php
+Demonstration
+-------------
+Projects using KrISS mvvm
+* [KrISS bang](https://github.com/kriss/bang) : A simple and smart (or stupid) bang manager 
 
 Todo
 ----

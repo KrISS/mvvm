@@ -15,8 +15,7 @@ class Request implements RequestInterface {
     private $requestUri = ''; // pathInfo and queryString
     private $scheme = 'http';
 
-    public function __construct($uri = null, $method = 'GET')
-    {
+    public function __construct($uri = null, $method = 'GET') {
         if (is_null($uri)) {
             $this->initFromServer();
         } else {
@@ -24,98 +23,55 @@ class Request implements RequestInterface {
         }
     }
 
-    public function getBaseUrl() {
-        return $this->baseUrl;
+    public function getBaseUrl() {return $this->baseUrl;}
+
+    public function getHost() {return $this->host;}
+
+    public function getPathInfo() {return $this->pathInfo;}
+
+    public function getPort() {return $this->port;}
+
+    public function getQueryString() {return $this->queryString;}
+
+    public function getScheme() {return $this->scheme;}
+
+    public function getMethod() {return $this->method;}
+
+    public function getRequest($request = null, $default = null) {
+        if (is_null($request)) return $_POST;
+        return isset($_POST[$request])?$_POST[$request]:$default;
     }
 
-    public function getHost() {
-        return $this->host;
+    public function getQuery($query = null, $default = null) {
+        if (is_null($query)) return $_GET;
+        return isset($_GET[$query])?$_GET[$query]:$default;
     }
 
-    public function getPathInfo() {
-        return $this->pathInfo;
-    }
+    public function getRequestUri() {return $this->requestUri;}
 
-    public function getPort() {
-        return $this->port;
-    }
+    public function setBaseUrl($baseUrl) {$this->baseUrl = rtrim($baseUrl, '/');}
 
-    public function getQueryString() {
-        return $this->queryString;
-    }
+    public function setPathInfo($pathInfo) {$this->pathInfo = $pathInfo;}
 
-    public function getScheme() {
-        return $this->scheme;
-    }
+    public function setMethod($method) {$this->method = strtoupper($method);}
 
-    public function getMethod() {
-        return $this->method;
-    }
+    public function setHost($host) {$this->host = preg_replace('/:(.*)$/i', "", strtolower($host));}
+    
+    public function setRequestUri($requestUri) {$this->requestUri = $requestUri;}
 
-    public function getRequest() {
-        return $_POST;
-    }
+    public function setScheme($scheme) {$this->scheme = strtolower($scheme);}
 
-    public function getQuery() {
-        return $_GET;
-    }
+    public function setPort($port) {$this->port = (int) $port;}
+    // string cast to be fault-tolerant, accepting null
+    public function setQueryString($queryString) {$this->queryString = (string) $queryString;}
 
-    public function getRequestUri() {
-        return $this->requestUri;
-    }
-
-    public function setBaseUrl($baseUrl)
-    {
-        $this->baseUrl = $baseUrl;
-        return $this;
-    }
-    public function setPathInfo($pathInfo)
-    {
-        $this->pathInfo = $pathInfo;
-        return $this;
-    }
-
-    public function setMethod($method)
-    {
-        $this->method = strtoupper($method);
-        return $this;
-    }
-    public function setHost($host)
-    {
-        $this->host = preg_replace('/:(.*)$/i', "", strtolower($host));
-        return $this;
-    }
-    public function setRequestUri($requestUri)
-    {
-        $this->requestUri = $requestUri;
-        return $this;
-    }
-    public function setScheme($scheme)
-    {
-        $this->scheme = strtolower($scheme);
-        return $this;
-    }
-    public function setPort($port)
-    {
-        $this->port = (int) $port;
-        return $this;
-    }
-    public function setQueryString($queryString)
-    {
-        // string cast to be fault-tolerant, accepting null
-        $this->queryString = (string) $queryString;
-        return $this;
-    }
-
-    public function getUri()
-    {
+    public function getUri() {
         $queryString = $this->getQueryString();
         $queryString = empty($queryString)?'':'?'.$queryString;
         return $this->getSchemeAndHttpHost().$this->getBaseUrl().$this->getPathInfo().$queryString;
     }
 
-    public function getSchemeAndHttpHost()
-    {
+    public function getSchemeAndHttpHost() {
         $scheme = $this->getScheme();
         $port = $this->getPort();
         $defaultPort = $scheme.$port === 'http80' || $scheme.$port === 'https443';
@@ -123,8 +79,7 @@ class Request implements RequestInterface {
         return $scheme.'://'.$this->getHost().(($defaultPort)?'':':'.$port);
     }
 
-    private function prepareRequestUri()
-    {
+    private function prepareRequestUri() {
         $requestUri = '';
         if (!empty($this->getServer('REQUEST_URI'))) {
             $requestUri = $this->getServer('REQUEST_URI');
@@ -145,8 +100,7 @@ class Request implements RequestInterface {
     }
 
     // https://github.com/zendframework/zend-http/blob/master/src/PhpEnvironment/Request.php
-    private function prepareBaseUrl()
-    {
+    private function prepareBaseUrl() {
         $filename       = basename($this->getServer('SCRIPT_FILENAME', ''));
         $scriptName     = $this->getServer('SCRIPT_NAME');
         $phpSelf        = $this->getServer('PHP_SELF');
@@ -197,8 +151,7 @@ class Request implements RequestInterface {
         return $baseUrl;
     }
 
-    private function preparePathInfo()
-    {
+    private function preparePathInfo() {
         $baseUrl = $this->getBaseUrl();
         $requestUri = $this->getRequestUri();
         if ($pos = strpos($requestUri, '?')) {
@@ -209,17 +162,16 @@ class Request implements RequestInterface {
         return (string) $pathInfo;
     }
 
-    private function initFromServer()
-    {
+    private function initFromServer() {
         $method = $this->getServer('REQUEST_METHOD', 'GET');
         // Header X-HTTP-METHOD-OVERRIDE
-        if (isset($_GET['_method']) && $method === 'POST') $method = $_GET['_method'];
+        if (isset($_POST['_method']) && $method === 'POST') $method = $_POST['_method'];
         $this->setMethod($method);
         $this->setHost($this->getServer(
             'HTTP_HOST',
             $this->getServer(
                 'SERVER_NAME',
-                $this->getServer('SERVER_ADDR'))));
+                $this->getServer('SERVER_ADDR', $this->host))));
 
         $isSecure = !empty($this->getServer('HTTPS')) && $this->getServer('HTTPS') == 'on';
         $this->setScheme('http'.($isSecure?'s':''));
@@ -230,8 +182,7 @@ class Request implements RequestInterface {
         $this->setPathInfo($this->preparePathInfo());
     }
 
-    private function initFromUri($uri, $method)
-    {
+    private function initFromUri($uri, $method) {
         $this->setMethod($method);
 
         $components = parse_url($uri);
@@ -265,8 +216,8 @@ class Request implements RequestInterface {
 
     }
 
-    private function getServer($index, $default = '')
-    {
-        return isset($_SERVER[$index])?$_SERVER[$index]:$default;
+    public function getServer($server = null, $default = null) {
+        if (is_null($server)) return $_SERVER;
+        return isset($_SERVER[$server])?$_SERVER[$server]:$default;
     }
 }

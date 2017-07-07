@@ -7,7 +7,8 @@ use Kriss\Mvvm\Validator\ValidatorInterface;
 class Validator implements ValidatorInterface {
     private $errors = [];
 
-    public function setConstraints($constraints) { }
+    public function setConstraints($name, $constraints) { }
+    public function getConstraints($name) { return null; }
 
     public function isValid($data) {
 	if (!isset($data['hello']) || empty($data['hello'])) {

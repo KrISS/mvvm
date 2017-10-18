@@ -12,26 +12,74 @@ use Kriss\Core\Response\Response;
 include_once('modelArray.php');
 
 class RouterAutoFormView implements ViewInterface {
-    private $viewModel;
-    private $router;
+    protected $viewModel;
+    protected $router;
 
     public function __construct(FormViewModelInterface $viewModel, RouterInterface $router) {
         $this->viewModel = $viewModel;
         $this->router = $router;
     }
     
-    private function stringify($data) {
-        $string = ['<ul>'];
-        foreach($data as $key => $item) {
-            $attr = '';
-            if (is_object($item) || is_array($item)) {
-                $string[] = '<li'.$attr.'>'.$key.': '.$this->stringify($item).'</li>';
-            } else {
-                $string[] = '<li'.$attr.'>'.$key.': '.$item.'</li>';
+    protected function stringify($data) {
+        $result = '';
+        if (!empty($data)) {
+            $string = ['<ul>'];
+            foreach($data as $key => $item) {
+                $attr = '';
+                if (is_object($item) || is_array($item)) {
+                    $string[] = '<li'.$attr.'>'.$key.': '.$this->stringify($item).'</li>';
+                } else {
+                    $string[] = '<li'.$attr.'>'.$key.': '.$item.'</li>';
+                }
+            }
+            $string[] = '</ul>';
+            $result = join('', $string);
+        }
+
+        return $result;
+    }
+
+    protected function renderName($name, $value) {
+        $result = '';
+        if ($name != 'id' && $name[0] != '*') {
+            $attrs = '';
+            $label = $name;
+            if (isset($value['attrs'])) {
+                foreach($value['attrs'] as $key => $val) {
+                    $attrs .= ' '.$key.'="'.$val.'"';
+                }
+            }
+            if (isset($value['label'])) {
+                $label = $value['label'];
+            }            
+            $result = '<div><label>'.$label.': <input name="'.$name.'" value="'.$value['value'].'" type="'.$value['type'].'"'.$attrs.'/></label></div>';
+        }
+        return $result;
+    }
+    
+    protected function renderForm($slug, $object) {
+        $method = $object['*']['method'];
+        $url = $object['*']['action'];
+        $result = '<form action="'.$url.'" id="'.$slug.'" method="'.$method.'">';
+        if (isset($object['_method']['value'])) $method = $object['_method']['value'];
+        if ($method != 'DELETE') {
+            foreach($object as $name => $value) {
+                $result .= $this->renderName($name, $value);
+            }
+        } else {
+            foreach($object as $name => $value) {
+                if ($name != 'id' && $name[0] != '*') {
+                    if ($name === '_method') {
+                        $result .= '<input name="'.$name.'" value="'.$value['value'].'" type="'.$value['type'].'"/>';
+                    } else {
+                        $result .= '<div>'.$name.': '.$value['value'].'</div>';
+                    }
+                }
             }
         }
-        $string[] = '</ul>';
-        return join('', $string);
+        $result .= '<input type="submit" value="'.$method.'"/>';
+        $result .= '</form>';
+        return $result;
     }
     
     public function render() {
@@ -46,30 +94,10 @@ class RouterAutoFormView implements ViewInterface {
         if (!is_null($data)) {
             foreach($data as $slug => $object) {
                 $result .= '<ul><li><a href="'.$this->router->generate('autoroute_index', ['slug' => $slug]).'">'.$slug.'</a></li></ul>';
+            }
+            foreach($data as $slug => $object) {
                 if (!is_null($object)) {
-                    $method = $object['*']['method'];
-                    $url = $object['*']['action'];
-                    $result .= '<form action="'.$url.'" id="'.$slug.'" method="'.$method.'">';
-                    if (isset($object['_method']['value'])) $method = $object['_method']['value'];
-                    if ($method != 'DELETE') {
-                        foreach($object as $name => $value) {
-                            if ($name != 'id' && $name[0] != '*') {
-                                $result .= '<div><label>'.$name.': <input name="'.$name.'" value="'.$value['value'].'" type="'.$value['type'].'"/></label></div>';
-                            }
-                        }
-                    } else {
-                        foreach($object as $name => $value) {
-                            if ($name != 'id' && $name[0] != '*') {
-                                if ($name === '_method') {
-                                    $result .= '<input name="'.$name.'" value="'.$value['value'].'" type="'.$value['type'].'"/>';
-                                } else {
-                                    $result .= '<div>'.$name.': '.$value['value'].'</div>';
-                                }
-                            }
-                        }
-                    }
-                    $result .= '<input type="submit" value="'.$method.'"/>';
-                    $result .= '</form>';
+                    $result .= $this->renderForm($slug, $object);
                 }
             }
         }
@@ -457,7 +485,7 @@ class AutoRoute {
             $classActionKey = '$'.strtolower($this->getClass($slug)).'_'.$action.'_'.$key;
             $identifierKey = '#'.$slug.'_'.$key;
             $identifierActionKey = '#'.$slug.'_'.$action.'_'.$key;
-            
+
             if ($this->container->has($classKey)) {
                 $rule = array_replace_recursive($rule, $this->container->getRule($classKey));
             }

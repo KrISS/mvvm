@@ -34,12 +34,14 @@ function config($app) {
     ];
     $container->set('#config_create_validator', $configValidator);
     $container->set('#config_update_validator', $configValidator);
-    $container->set('Authorization', [
-        'instanceOf' => 'Kriss\\Core\\Auth\\'.ucfirst($config->visibility).'RequestAuthorization',
-        'shared' => true,
-        'constructParams' => [
-            ['instance' => 'Authentication'],
-            ['instance' => 'Request'],
-        ]
-    ]);
+    if (!$container->has('Authorization')) {
+        $container->set('Authorization', [
+            'instanceOf' => 'Kriss\\Core\\Auth\\'.ucfirst($config->visibility).'RequestAuthorization',
+            'shared' => true,
+            'constructParams' => [
+                ['instance' => 'Authentication'],
+                ['instance' => 'Request'],
+            ]
+        ]);
+    }
 }

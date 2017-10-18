@@ -19,7 +19,7 @@ class Container implements ContainerInterface {
             $this->setInstance($id, $instance);
             return $instance;
         } else if (class_exists($id)) {
-            $instance = new $id(args);
+            $instance = new $id($args);
             $this->setInstance($id, $instance);
             return $instance;
         } else {

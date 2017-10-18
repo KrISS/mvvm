@@ -12,12 +12,16 @@ trait ValidatorTestTrait {
             'inArray' => '2',
             'required' => true,
             'minLength' => '123456',
+            'numMax' => '5',
+            'numMin' => '7',
         ];
         $this->invalidArrayData = [
             'email' => 'testtest.fr',
             'inArray' => '4',
             'required' => null,
             'minLength' => '123',
+            'numMax' => '7',
+            'numMin' => '5',
         ];
         $this->validObjectData = new stdClass;
         foreach($this->validArrayData as $key => $value) $this->validObjectData->$key = $value;
@@ -57,6 +61,14 @@ trait ValidatorTestTrait {
     {
         $validator = $this->getValidator();
         $validator->setConstraints('required', [['required']]);
+        $this->checkValidator($validator);
+    }
+
+    public function testNumMinMaxValidator()
+    {
+        $validator = $this->getValidator();
+        $validator->setConstraints('numMin', [['numMin', [6]]]);
+        $validator->setConstraints('numMax', [['numMax', [6]]]);
         $this->checkValidator($validator);
     }
 

@@ -54,6 +54,16 @@ class Validator implements ValidatorInterface {
                         $this->errors[$name][] = $error;
                     }
                     break;
+                case 'numMin':
+                    if ($value < $params[0]) {
+                        $this->errors[$name][] = $error;
+                    }
+                    break;
+                case 'numMax':
+                    if ($value > $params[0]) {
+                        $this->errors[$name][] = $error;
+                    }
+                    break;
                 case 'minLength':
                     if (strlen($value) < $params[0]) {
                         $this->errors[$name][] = $error;

@@ -52,7 +52,13 @@ class RouterAutoFormView implements ViewInterface {
             if (isset($value['label'])) {
                 $label = $value['label'];
             }            
-            $result = '<div><label>'.$label.': <input name="'.$name.'" value="'.$value['value'].'" type="'.$value['type'].'"'.$attrs.'/></label></div>';
+            switch($value['type']) {
+            case 'textarea':
+                $result = '<div><label>'.$label.': <br><textarea name="'.$name.'"'.$attrs.'>'.$value['value'].'</textarea></label></div>';
+                break;
+            default:
+                $result = '<div><label>'.$label.': <input name="'.$name.'" value="'.$value['value'].'" type="'.$value['type'].'"'.$attrs.'/></label></div>';
+            }
         }
         return $result;
     }

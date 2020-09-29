@@ -31,7 +31,7 @@ class FormView implements ViewInterface {
         $errors = $this->viewModel->getErrors();
         
         $result .= $this->stringify($errors);
-        
+
         if (!is_null($data)) {
             foreach($data as $slug => $object) {
                 if (!is_null($object)) {
@@ -42,7 +42,13 @@ class FormView implements ViewInterface {
                     if ($method != 'DELETE') {
                         foreach($object as $name => $value) {
                             if ($name != 'id' && $name[0] != '*') {
-                                $result .= '<div><label>'.$name.': <input name="'.$name.'" value="'.$value['value'].'" type="'.$value['type'].'"/></label></div>';
+                                switch($value['type']) {
+                                case 'textarea':
+                                    $result .= '<div><label>'.$name.': <textarea name="'.$name.'">'.$value['value'].'</textarea></label></div>';
+                                    break;
+                                default:
+                                    $result .= '<div><label>'.$name.': <input name="'.$name.'" value="'.$value['value'].'" type="'.$value['type'].'"/></label></div>';
+                                }
                             }
                         }
                     } else {

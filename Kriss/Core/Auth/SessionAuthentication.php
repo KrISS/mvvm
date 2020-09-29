@@ -40,12 +40,12 @@ class SessionAuthentication implements AuthenticationInterface {
         if ($this->request->getServer('HTTPS','') !== 'on') {
             $ssl = false;
         }
-        session_set_cookie_params($cookie['lifetime'], $cookiedir, $this->request->getServer('HTTP_HOST'), $ssl);
-        // Use cookies to store session.
-        ini_set('session.use_cookies', 1);
-        // Force cookies for session  (phpsessionID forbidden in URL)
-        ini_set('session.use_only_cookies', 1);
         if (!session_id()) {
+            session_set_cookie_params($cookie['lifetime'], $cookiedir, $this->request->getServer('HTTP_HOST'), $ssl);
+            // Use cookies to store session.
+            ini_set('session.use_cookies', 1);
+            // Force cookies for session  (phpsessionID forbidden in URL)
+            ini_set('session.use_only_cookies', 1);
             // Prevent php to use sessionID in URL if cookies are disabled.
             ini_set('session.use_trans_sid', false);
             if (!empty($this->sessionName)) {

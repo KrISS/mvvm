@@ -222,8 +222,8 @@ class AutoRoute {
         
         $this->classes = array_merge($this->singleClasses, $this->listClasses);
         modelArray($this->container, $this->classes);
-        $slugs = join(array_merge(array_filter(array_keys($this->singleClasses), 'is_string'),array_filter(array_keys($this->listClasses), 'is_string')), '|');
-        $slugsId = join(array_filter(array_keys($this->listClasses), 'is_string'), '|');
+        $slugs = join('|', array_merge(array_filter(array_keys($this->singleClasses), 'is_string'),array_filter(array_keys($this->listClasses), 'is_string')));
+        $slugsId = join('|', array_filter(array_keys($this->listClasses), 'is_string'));
         $this->prefix = '<slug'.(empty($slugs)?'':':'.$slugs).'>';
         $this->prefixId = '<slug'.(empty($slugsId)?'':':'.$slugsId).'>';
         $this->addResponses();

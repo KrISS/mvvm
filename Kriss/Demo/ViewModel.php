@@ -5,14 +5,12 @@ namespace Kriss\Demo;
 use Kriss\Mvvm\ViewModel\FormViewModelInterface as ViewModelInterface;
 
 class ViewModel implements ViewModelInterface {
-    protected $model;
-    protected $data;
+    protected $data = null;
 
-    public function __construct(Model $model, Validator $validator) {
-        $this->model = $model;
-        $this->validator = $validator;
-        $this->data = null;
-    }
+    public function __construct(
+        protected Model $model,
+        protected Validator $validator
+    ) {}
 
     public function setCriteria($criteria) {}
     public function setOrderBy($orderBy) {}
@@ -25,7 +23,7 @@ class ViewModel implements ViewModelInterface {
 
     public function getErrors() { return $this->validator->getErrors(); }
 
-    public function isValid($data) {        
+    public function isValid($data) {
         return $this->validator->isValid($data);
     }
 }
